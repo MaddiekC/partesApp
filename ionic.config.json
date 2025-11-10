@@ -1,0 +1,7 @@
+{
+  "name": "partesApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
