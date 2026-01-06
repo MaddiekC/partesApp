@@ -1,31 +1,23 @@
 import { Routes } from '@angular/router';
 import { LoginPage } from './login/login.page';
 import { AuthGuard } from './services/auth.guard';
-import { MainComponent } from './main/main.component'; 
+import { PartesPage } from './partes/partes.page';
+import { PartesDetallesPage } from './partes-detalles/partes-detalles.page';
+import { AgregarDetPage } from './agregar-det/agregar-det.page';
 
 export const routes: Routes = [
-  // Ruta de login (pública)
   { path: 'login', component: LoginPage },
 
-  // Ruta principal (protegida)
-  {
-    path: '',
-    component: MainComponent,
-    canActivate: [AuthGuard],
-    children: [
-      {
-        path: 'tabs',
-        loadChildren: () =>
-          import('./tabs/tabs.routes').then((m) => m.routes), 
-      },
-      {
-        path: '',
-        redirectTo: 'tabs',
-        pathMatch: 'full', // ✅ redirige automáticamente
-      },
-    ],
-  },
+  { path: 'partes', component: PartesPage, canActivate: [AuthGuard] },
 
-  // Ruta por defecto (redirige al login)
+  { path: 'partes/:id', component: PartesDetallesPage, canActivate: [AuthGuard] },
+
+  {
+    path: 'agregar-det/:id',
+    component: AgregarDetPage, canActivate: [AuthGuard]
+  },
+  // ruta por defecto
+  { path: '', redirectTo: 'partes', pathMatch: 'full' },
+
   { path: '**', redirectTo: 'login' },
 ];

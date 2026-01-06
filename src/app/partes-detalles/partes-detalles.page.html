@@ -1,0 +1,70 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/" text="Atrás"></ion-back-button>
+    </ion-buttons>
+
+    <ion-title>
+      Parte {{ detPartes[0]?.secParte }} - {{ detPartes[0]?.codTrabaj }}
+    </ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button (click)="exportToPDF()" title="Descargar PDF">
+        <img src="/assets/images/pdfDownload1.png" width="30" height="31" alt="Descargar" title="Descargar registro">
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <div *ngIf="loading" class="ion-text-center ion-padding">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando detalles...</p>
+  </div>
+
+  <div *ngIf="!loading && detPartes.length > 0">
+
+    <div class="table-container">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Cod.</th>
+            <th>Empleado</th>
+            <th>Lote</th>
+            <th>Labor</th>
+            <th>Cant.</th>
+            <th>Medida</th>
+            <th>Inicio</th>
+            <th>Fin</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of detPartes" [ngClass]="{
+        'row-hora': getLaborUM(p.codLabor) === 11,
+        'row-jornal': getLaborUM(p.codLabor) === 6
+      }">
+            <td><ion-badge color="light">{{p.codTrabaj}}</ion-badge></td>
+            <td class="text-bold">{{getEmpleadoName(p.codTrabaj)}}</td>
+            <td>{{getLoteName(p.loteId)}}</td>
+            <td>{{getLaborName(p.codLabor)}}</td>
+            <td><strong>{{p.cantidad}}</strong></td>
+            <td><strong>{{getUnidadMedida(getLaborUM(p.codLabor))}}</strong></td>
+            <td class="date-cell">{{formatDate(p.fechaInicio)}}</td>
+            <td class="date-cell">{{formatDate(p.fechaFin)}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div *ngIf="!loading && detPartes.length === 0" class="empty-state">
+    <ion-icon name="document-text-outline"></ion-icon>
+    <p>No se encontraron registros de partes.</p>
+  </div>
+
+  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="infiniteDisabled">
+    <ion-infinite-scroll-content loadingSpinner="crescent"></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

@@ -1,0 +1,97 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/" text="Atrás"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Agregar Detalles</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form *ngIf="form" [formGroup]="form">
+
+    <div formArrayName="detalles">
+      <ion-card *ngFor="let det of detalles.controls; let i = index" [formGroupName]="i" class="detalle-card">
+        <ion-item-divider color="light">
+          <ion-label>Registro #{{ i + 1 }}</ion-label>
+          <ion-button slot="end" color="danger" fill="clear" (click)="removeDetalle(i)">
+            <ion-icon name="trash-outline"></ion-icon>
+          </ion-button>
+        </ion-item-divider>
+
+        <ion-list lines="none" class="ion-padding-bottom">
+          <ion-row>
+            <ion-col size="6">
+              <ion-item class="custom-input">
+                <ion-label position="stacked">Trabajador</ion-label>
+                <ion-select formControlName="empleado" interface="popover" placeholder="Seleccione">
+                  <ion-select-option *ngFor="let e of empleados" [value]="e.codTrabaj">
+                    {{ e.nombreCorto }}
+                  </ion-select-option>
+                </ion-select>
+                <!-- <ion-input type="text" formControlName="empleado" placeholder="Nombre o código"></ion-input> -->
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item class="custom-input">
+                <ion-label position="stacked">Lote</ion-label>
+                <ion-select formControlName="lote" interface="popover" placeholder="Seleccione">
+                  <ion-select-option *ngFor="let l of lotes" [value]="l.loteId">
+                    {{ l.descripcion }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+
+          <ion-row>
+            <ion-col size="6">
+              <ion-item class="custom-input">
+                <ion-label position="stacked">Labor</ion-label>
+                <ion-select formControlName="labor" interface="popover" placeholder="Seleccione">
+                  <ion-select-option *ngFor="let l of labors" [value]="l.id">
+                    {{ l.nombre }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item class="custom-input">
+                <ion-label position="stacked">Cantidad</ion-label>
+                <ion-input type="number" formControlName="cantidad"></ion-input>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+
+          <ion-row>
+            <ion-col size="6">
+              <ion-item class="custom-input">
+                <ion-label position="stacked">Fecha Inicio</ion-label>
+                <ion-input type="date" formControlName="fechaInicio"></ion-input>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item class="custom-input">
+                <ion-label position="stacked">Fecha Fin</ion-label>
+                <ion-input type="date" formControlName="fechaFin"></ion-input>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+        </ion-list>
+      </ion-card>
+    </div>
+
+    <div class="ion-padding-vertical">
+      <ion-button expand="block" fill="outline" (click)="addDetalle()" class="ion-margin-bottom">
+        <ion-icon slot="start" name="add-outline"></ion-icon>
+        Añadir otra fila
+      </ion-button>
+
+      <ion-button expand="block" color="success" (click)="guardar()" mode="ios">
+        <ion-icon slot="start" name="save-outline"></ion-icon>
+        Guardar Todo
+      </ion-button>
+    </div>
+
+  </form>
+</ion-content>

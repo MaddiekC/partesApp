@@ -1,0 +1,37 @@
+.detalle-card {
+    margin: 16px 0;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+
+    ion-item-divider {
+        --padding-start: 16px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #eee;
+    }
+}
+
+.custom-input {
+    --padding-start: 8px;
+    --background: #f9f9f9;
+    border-radius: 8px;
+    margin: 4px 8px;
+
+    ion-label {
+        font-size: 0.8rem !important;
+        color: var(--ion-color-medium);
+        font-weight: 600;
+    }
+
+    ion-input,
+    ion-select {
+        font-size: 0.95rem;
+    }
+}
+
+ion-button {
+    --border-radius: 10px;
+    font-weight: 600;
+    height: 45px;
+}

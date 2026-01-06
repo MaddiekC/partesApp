@@ -1,9 +1,13 @@
 import { Injectable } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
 import { Preferences } from '@capacitor/preferences';
-import { BehaviorSubject, from } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 const TOKEN_KEY = 'token';
+
+interface JwtPayload {
+  UserId: number; // o usa el nombre real del campo con el username
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -55,6 +59,16 @@ export class AuthService {
     const res = await Preferences.get({ key: TOKEN_KEY });
     this._token = res.value ?? '';
     return this._token || null;
+  }
+
+  async getUserInfo(): Promise<any> {
+    const token = await this.getToken();
+    if (token) {
+      const decoded = jwtDecode<JwtPayload>(token);
+        //console.log(decoded)
+        return decoded.UserId;
+    }
+    return null;
   }
 
   // guardar token tras login

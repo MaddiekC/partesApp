@@ -73,7 +73,7 @@
 }
 
 /* --- Estilos para pantallas anchas (landscape / tablet) --- */
-@media (min-width: 900px) {
+@media (min-width: 20px) {
   .login-layout {
     flex-direction: row; /* imagen a la izquierda, panel a la derecha */
     align-items: stretch;

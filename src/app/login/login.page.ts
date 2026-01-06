@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonItem, IonLabel, IonNote, IonButton } from '@ionic/angular/standalone';
+import { IonContent, IonItem, IonLabel, IonNote, IonButton, IonInput } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
-import { ConexionpyService } from '../services/conexionpy.service';
+import { ConexionpyService, LoginDto } from '../services/conexionpy.service';
+import { AuthService } from '../services/auth.service';
 
 
 @Component({
@@ -11,22 +12,23 @@ import { ConexionpyService } from '../services/conexionpy.service';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
   standalone: true,
-  imports: [IonButton, IonNote, IonLabel, IonItem, IonContent, CommonModule, FormsModule]
+  imports: [IonButton, IonNote, IonLabel, IonItem, IonContent, IonInput, CommonModule, FormsModule]
 })
 export class LoginPage {
-  loginObj: Login;
-  constructor(private usuario: ConexionpyService, private router: Router) {
-    this.loginObj = new Login();
-  }
+  loginObj: LoginDto = { login: '', passw: '' };
+
+  constructor(private usuario: ConexionpyService, private router: Router, private auth: AuthService ) { }
+
   onLogin() {
+    console.log('Enviando loginObj:', this.loginObj);
     this.usuario.loginUser(this.loginObj).subscribe(
-      (res: any) => {
-        if (res.token) {
+      async (res: any) => {
+        if (res?.token) {
           console.log("Login Success");
-          localStorage.setItem('token', res.token);
-          this.router.navigateByUrl('/main');
+          await this.auth.setToken(res.token);
+          this.router.navigateByUrl('', { replaceUrl: true });
         } else {
-          alert(res.msg || 'Login failed');
+          alert(res?.msg || 'Login failed');
         }
       },
       error => {
@@ -36,14 +38,4 @@ export class LoginPage {
     );
   }
 }
-
-export class Login {
-  Username: string;
-  Password: string;
-  constructor() {
-    this.Username= '';
-    this.Password = '';
-  }
-}
-
 
