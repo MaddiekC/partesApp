@@ -60,9 +60,13 @@ export class ConexionpyService {
     };
     return this.httpClient.get<any>(`${this.baseUrl}/TranCpartes/mine`, { params });
   }
-  
+
   postCabPartes(cabPartes: any): Observable<any> {
     return this.httpClient.post<any>(`${this.baseUrl}/TranCpartes`, cabPartes);
+  }
+
+  desactivarParte(secParte: number): Observable<any> {
+    return this.httpClient.patch<any>(`${this.baseUrl}/TranCpartes/Desactivar/${secParte}`, {});
   }
 
   //-----Detalles
@@ -71,5 +75,8 @@ export class ConexionpyService {
   }
   guardarDetalles(payload: any): Observable<any> {
     return this.httpClient.post<any>(`${this.baseUrl}/TranDpartes`, payload);
+  }
+  editarDetalle(secParte: number, secuencia: number, bodyUpdate: any): Observable<any> {
+    return this.httpClient.put<any>(`${this.baseUrl}/TranDpartes/${secParte}/${secuencia}`, bodyUpdate);
   }
 }

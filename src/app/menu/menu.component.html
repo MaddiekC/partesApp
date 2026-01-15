@@ -6,6 +6,6 @@
   </ion-header>
   <ion-content class="ion-padding">
     <ion-item [routerLink]="['/']">Partes</ion-item>
-    <ion-item [routerLink]="['/login']">Login</ion-item>
+    <ion-item (click)="logout()">Cerrar sesión <ion-icon name="log-out-outline" slot="start"></ion-icon></ion-item>
   </ion-content>
-</ion-menu>
+</ion-menu> 

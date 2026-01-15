@@ -2,14 +2,14 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
 //import { IonContent, IonHeader, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { IonContent, IonSpinner, IonButton, IonToolbar, IonHeader, IonTitle, IonInfiniteScroll, IonInfiniteScrollContent, IonButtons, IonMenuButton, IonSearchbar, IonModal, IonItem, IonInput, IonSelectOption, IonCard, IonIcon, IonCardContent, IonLabel, IonNote } from "@ionic/angular/standalone";
+import { IonContent, IonSpinner, IonButton, IonToolbar, IonHeader, IonTitle, IonInfiniteScroll, IonInfiniteScrollContent, IonButtons, IonMenuButton, IonSearchbar, IonModal, IonItem, IonInput, IonSelectOption, IonCard, IonIcon, IonCardContent, IonLabel, IonNote, AlertController } from "@ionic/angular/standalone";
 import { ConexionpyService } from '../services/conexionpy.service';
 import { AuthService } from '../services/auth.service';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { IonSelect } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { clipboardOutline, addCircleOutline, eyeOutline, downloadOutline, keyOutline, businessOutline, calendarOutline, chatbubbleEllipsesOutline } from 'ionicons/icons';
+import { clipboardOutline, addCircleOutline, eyeOutline, downloadOutline, keyOutline, businessOutline, calendarOutline, chatbubbleEllipsesOutline, createOutline, addOutline, downloadSharp, trashOutline } from 'ionicons/icons';
 import { LocalDbService } from '../services/dataBase/local-db.service';
 
 @Component({
@@ -60,8 +60,8 @@ export class PartesPage implements OnInit {
     descripcion: '',
     horasTrabajadas: 0
   }
-  constructor(private partesService: ConexionpyService, private authService: AuthService, private fb: FormBuilder, private localDbService: LocalDbService) {
-    addIcons({ addCircleOutline, clipboardOutline, keyOutline, businessOutline, calendarOutline, chatbubbleEllipsesOutline, downloadOutline, eyeOutline });
+  constructor(private partesService: ConexionpyService, private authService: AuthService, private fb: FormBuilder, private localDbService: LocalDbService, private alertCtrl: AlertController) {
+    addIcons({ addCircleOutline, downloadSharp, trashOutline, clipboardOutline, businessOutline, calendarOutline, chatbubbleEllipsesOutline, addOutline, createOutline, keyOutline, downloadOutline, eyeOutline });
   }
 
   async ngOnInit(): Promise<void> {
@@ -202,7 +202,7 @@ export class PartesPage implements OnInit {
       this.partesService.postCabPartes(payload).subscribe({
         next: (res) => {
           console.log('Parte creado:', res);
-          alert('Parte creado correctamente');
+          //alert('Parte creado correctamente');
           this.modal.dismiss();
           this.loadPage(1);
         }
@@ -221,6 +221,37 @@ export class PartesPage implements OnInit {
         this.empleados = res;
         console.log('Empleado:', res);
       });
+  }
+
+  async eliminarParte(secParte: number) {
+    const alertDialog = await this.alertCtrl.create({
+      header: '¿Eliminar Parte?',
+      message: 'Esta acción eliminará el parte.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            this.partesService.desactivarParte(secParte).subscribe({
+              next: () => {
+                // Recargamos la página o filtramos la lista localmente
+                this.loadPage(1);
+              },
+              error: async (err) => {
+                const errorAlert = await this.alertCtrl.create({
+                  header: 'Error',
+                  message: err.error.message || 'Error al desactivar',
+                  buttons: ['OK']
+                });
+                await errorAlert.present();
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alertDialog.present();
   }
 
   exportToPDF() {

@@ -9,62 +9,135 @@
     </ion-title>
 
     <ion-buttons slot="end">
-      <ion-button (click)="exportToPDF()" title="Descargar PDF">
-        <img src="/assets/images/pdfDownload1.png" width="30" height="31" alt="Descargar" title="Descargar registro">
-      </ion-button>
+      <!-- <ion-button (click)="exportToPDF()" title="Descargar PDF">
+        <ion-icon name="download-sharp"></ion-icon>
+      </ion-button> -->
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-
   <div *ngIf="loading" class="ion-text-center ion-padding">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Cargando detalles...</p>
   </div>
 
-  <div *ngIf="!loading && detPartes.length > 0">
+  <ion-grid *ngIf="!loading && detPartes.length > 0">
+    <ion-row>
+      <ion-col size="12" size-md="6" size-xl="4" *ngFor="let p of detPartes">
+        <ion-card class="detalle-card" [ngClass]="{
+            'border-hora': getLaborUM(p.codLabor) === 11,
+            'border-jornal': getLaborUM(p.codLabor) === 6
+          }">
+          <ion-card-content>
+            <div class="card-header">
+              <ion-badge color="success">#{{p.codTrabaj}}</ion-badge>
+              <div class="acciones-btn">
+                <ion-button *ngIf="!esAprobado" fill="clear" color="primary" (click)="editarDetalle(p)">
+                  <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+                </ion-button>
+              </div>
+            </div>
 
-    <div class="table-container">
-      <table class="custom-table">
-        <thead>
-          <tr>
-            <th>Cod.</th>
-            <th>Empleado</th>
-            <th>Lote</th>
-            <th>Labor</th>
-            <th>Cant.</th>
-            <th>Medida</th>
-            <th>Inicio</th>
-            <th>Fin</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of detPartes" [ngClass]="{
-        'row-hora': getLaborUM(p.codLabor) === 11,
-        'row-jornal': getLaborUM(p.codLabor) === 6
-      }">
-            <td><ion-badge color="light">{{p.codTrabaj}}</ion-badge></td>
-            <td class="text-bold">{{getEmpleadoName(p.codTrabaj)}}</td>
-            <td>{{getLoteName(p.loteId)}}</td>
-            <td>{{getLaborName(p.codLabor)}}</td>
-            <td><strong>{{p.cantidad}}</strong></td>
-            <td><strong>{{getUnidadMedida(getLaborUM(p.codLabor))}}</strong></td>
-            <td class="date-cell">{{formatDate(p.fechaInicio)}}</td>
-            <td class="date-cell">{{formatDate(p.fechaFin)}}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            <h2 class="empleado-nombre">{{getEmpleadoName(p.codTrabaj)}}</h2>
 
-  </div>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="label">Labor:</span>
+                <span class="value">{{getLaborName(p.codLabor)}}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Lote:</span>
+                <span class="value">{{getLoteName(p.loteId)}}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Cantidad:</span>
+                <span class="value-destacado">{{p.cantidad}} {{getUnidadMedida(getLaborUM(p.codLabor))}}</span>
+              </div>
+            </div>
 
-  <div *ngIf="!loading && detPartes.length === 0" class="empty-state">
-    <ion-icon name="document-text-outline"></ion-icon>
-    <p>No se encontraron registros de partes.</p>
-  </div>
+            <div class="fechas-footer">
+              <span>{{formatDate(p.fechaInicio)}}</span>
+              <ion-icon name="arrow-forward-outline"></ion-icon>
+              <span>{{formatDate(p.fechaFin)}}</span>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 
-  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="infiniteDisabled">
-    <ion-infinite-scroll-content loadingSpinner="crescent"></ion-infinite-scroll-content>
-  </ion-infinite-scroll>
+  <ion-modal [isOpen]="isModalOpen" (didDismiss)="isModalOpen = false" [initialBreakpoint]="0.75"
+    [breakpoints]="[0, 0.75, 1]">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Editar Detalle</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="isModalOpen = false">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <div *ngIf="detalleSeleccionado">
+          <ion-row>
+            <ion-col size="6">
+              <ion-item fill="outline" mode="md" class="ion-margin-bottom">
+                <ion-label position="stacked">Trabajador</ion-label>
+                <ion-select [(ngModel)]="detalleSeleccionado.codTrabaj">
+                  <ion-select-option *ngFor="let e of empleados" [value]="e.codTrabaj">
+                    {{e.nombreCorto}}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item fill="outline" mode="md" class="ion-margin-bottom">
+                <ion-label position="stacked">Lote</ion-label>
+                <ion-select [(ngModel)]="detalleSeleccionado.loteId">
+                  <!-- <ion-select-option [value]="0">SIN LOTE (0)</ion-select-option> -->
+                  <ion-select-option *ngFor="let l of lotes" [value]="l.loteId">
+                    {{l.descripcion}}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item fill="outline" mode="md" class="ion-margin-bottom">
+                <ion-label position="stacked">Labor</ion-label>
+                <ion-select [(ngModel)]="detalleSeleccionado.codLabor">
+                  <ion-select-option *ngFor="let l of labors" [value]="l.id">
+                    {{l.nombre}}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item fill="outline" mode="md" class="ion-margin-bottom">
+                <ion-label position="stacked">Cantidad</ion-label>
+                <ion-input type="number" [(ngModel)]="detalleSeleccionado.cantidad"></ion-input>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item class="custom-input">
+                <ion-label position="stacked">Fecha Inicio</ion-label>
+                <ion-input type="date" [(ngModel)]="detalleSeleccionado.fechaInicio"></ion-input>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item class="custom-input">
+                <ion-label position="stacked">Fecha Fin</ion-label>
+                <ion-input type="date" [(ngModel)]="detalleSeleccionado.fechaFin"></ion-input>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+          <ion-button expand="block" color="success" (click)="confirmarEdicion()" class="ion-margin-top">
+            <ion-icon name="save-outline" slot="start"></ion-icon>
+            Cambiar
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>

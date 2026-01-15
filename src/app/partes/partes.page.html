@@ -5,12 +5,12 @@
     </ion-buttons>
     <ion-title>Registro de Partes</ion-title>
     <ion-buttons slot="end">
-      <ion-button title="Descargar PDF" id="open-modal">
+      <ion-button id="open-modal">
         <ion-icon slot="icon-only" name="add-circle-outline"></ion-icon>
       </ion-button>
-      <ion-button (click)="exportToPDF()" title="Descargar PDF">
-        <img src="/assets/images/pdfDownload1.png" width="27" height="28" alt="Descargar" title="Descargar registro">
-      </ion-button>
+      <!-- <ion-button (click)="exportToPDF()" title="Descargar PDF">
+        <ion-icon name="download-sharp"></ion-icon>
+      </ion-button> -->
     </ion-buttons>
   </ion-toolbar>
 
@@ -32,16 +32,20 @@
       <ion-card-content>
         <div class="card-header-flex">
           <div class="header-left-group">
+            <ion-button *ngIf="!p.usuarioaprob" fill="clear" color="danger" (click)="eliminarParte(p.secParte)">
+                  <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                </ion-button>
             <div class="sec-badge">#{{p.secParte}}</div>
             <span *ngIf="p.usuarioaprob" class="texto-aprobado">
-              APROBADO 
+              APROBADO
             </span>
           </div>
           <div class="header-right-group">
             <span class="fecha-text">{{ formatDate(p.fechaParte) }}</span>
 
             <div class="mini-actions">
-              <ion-button fill="clear" size="small" [routerLink]="['/agregar-det', p.secParte]" title="Añadir">
+              <ion-button *ngIf="!p.usuarioaprob" fill="clear" size="small" [routerLink]="['/agregar-det', p.secParte]"
+                title="Añadir">
                 <img src="/assets/images/agregarArchivo.png" width="22" height="22" />
               </ion-button>
               <ion-button fill="clear" size="small" [routerLink]="['/partes', p.secParte]" title="Detalles">
