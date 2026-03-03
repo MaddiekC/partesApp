@@ -30,6 +30,7 @@ export class AgregarDetPage implements OnInit {
   asistencias: any[] = [];
   fechaDelParte: string = '';
   codTrabaj: number = 0;
+  haciendaId: number = 0;
 
   constructor(private service: ConexionpyService, private fb: FormBuilder,
     private router: Router, private route: ActivatedRoute, private localDbService: LocalDbService) {
@@ -39,7 +40,11 @@ export class AgregarDetPage implements OnInit {
   ngOnInit() {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.secParte = idParam ? Number(idParam) : 0;
-    console.log(this.secParte);
+
+    const haciendaIdParam = this.route.snapshot.queryParamMap.get('haciendaId');
+    const haciendaId = haciendaIdParam ? Number(haciendaIdParam) : 0;
+
+    console.log('SecParte:', this.secParte);
     this.form = this.fb.group({
       secParte: [this.secParte],
       detalles: this.fb.array([])
@@ -47,7 +52,8 @@ export class AgregarDetPage implements OnInit {
 
     // al menos una fila inicial
     this.addDetalle();
-    this.loadLabor();
+    // this.loadLabor();
+    this.loadLabor(haciendaId);
     //this.loadEmpleado();
     this.loadLote();
     this.obtenerDatosCabecera();
@@ -88,61 +94,103 @@ export class AgregarDetPage implements OnInit {
     }
 
     const detallesArray = this.form.value.detalles;
-
     const totalesPorEmpleado: { [key: string]: number } = {};
 
     for (const d of detallesArray) {
-      const key = `${d.empleado}-${d.labor}`;
-      totalesPorEmpleado[key] = (totalesPorEmpleado[key] || 0) + Number(d.cantidad);
+      const empId = d.empleado || d.codTrabaj;
+      const key = `${empId}-${d.labor}`;
+      const cantidadActual = Number(d.cantidad);
+
+      // Acumulamos para la validación de máximos
+      totalesPorEmpleado[key] = (totalesPorEmpleado[key] || 0) + cantidadActual;
 
       const laborInfo = this.labors.find(l => l.id === Number(d.labor));
+
       if (laborInfo) {
-        if (totalesPorEmpleado[key] > laborInfo.avanceMaximo) {
-          const totales= totalesPorEmpleado[key] - laborInfo.avanceMaximo
-          alert(`Error: El empleado ${this.getEmpleadoName(d.empleado)} supera con ${totales} el máximo permitido para la labor ${laborInfo.nombre}.`);
+        // 1. VALIDACIÓN DE MÍNIMO (Por cada registro individual)
+        const minimoPermitido = laborInfo.avanceMinimo ?? laborInfo.avance_minimo ?? 0;
+        if (minimoPermitido > 0 && cantidadActual < minimoPermitido) {
+          alert(`Error: La cantidad (${cantidadActual}) es menor al mínimo permitido (${minimoPermitido}) para la labor ${laborInfo.nombre}.`);
+          return;
+        }
+
+        // 2. VALIDACIÓN DE MÁXIMO (Sobre el total acumulado del empleado en esa labor)
+        const maximoPermitido = laborInfo.avanceMaximo ?? laborInfo.avance_maximo ?? 0;
+        if (maximoPermitido > 0 && totalesPorEmpleado[key] > maximoPermitido) {
+          const exceso = totalesPorEmpleado[key] - maximoPermitido;
+          alert(`Error: El empleado ${this.getEmpleadoName(empId)} supera por ${exceso} el máximo permitido (${maximoPermitido}) para la labor ${laborInfo.nombre}.`);
           return;
         }
       }
     }
-
-
     const payload = {
       secParte: this.secParte,
-      detalles: this.form.value.detalles.map((d: any) => ({
-        fechaInicio: d.fechaInicio,
-        fechaFin: d.fechaFin,
-        cantidad: Number(d.cantidad),
-        lote: Number(d.lote),
-        labor: Number(d.labor),
-        empleado: Number(d.empleado)
-      }))
+      detalles: this.form.value.detalles.map((d: any, index: number) => {
+        const loteObj = d.lote;
+        const loteId = loteObj.loteId || loteObj.LOTE_ID;
+        const nombreSec = loteObj.nomSeccion || loteObj.NOM_SECCION || 'Desconocida';
+
+        const loteFormateado = String(loteId).padStart(4, '0');
+        return {
+          secuencia: index + 1,
+          fechaInicio: d.fechaInicio,
+          fechaFin: d.fechaFin,
+          cantidad: Number(d.cantidad),
+          lote: Number(loteId),
+          labor: Number(d.labor),
+          codTrabaj: Number(d.empleado),
+          nomSeccion: `${nombreSec} ${loteFormateado} `
+        }
+      })
     };
 
     console.log('Enviando este payload:', payload);
-
+    await this.localDbService.guardarDetallesLocal(this.secParte, payload.detalles);
+    if (!navigator.onLine) {
+      alert('Detalles guardados localmente. Se sincronizará cuando haya conexión.');
+      this.router.navigateByUrl('/partes');
+      return;
+    }
     if (navigator.onLine) {
       this.service.guardarDetalles(payload).subscribe({
         next: (resp) => {
           console.log('Guardado correcto', resp);
+          alert('Detalles guardados');
           this.router.navigateByUrl('/partes');
         },
         error: (err) => {
           console.error('Error al guardar', err);
+          alert(err);
         }
       });
-    } else {
-      await this.localDbService.guardarDetallesLocal(this.secParte, payload.detalles);
-      alert('Parte guardado localmente. Se sincronizará cuando haya conexión.');
-      this.router.navigateByUrl('/partes');
     }
   }
 
-  loadLabor() {
-    this.service.getLabor().subscribe
-      (res => {
-        this.labors = res;
-        console.log('Labor:', res);
-      });
+  // async loadLabor() {
+  //   try {
+  //     this.labors = await this.localDbService.obtenerLaborLocal();
+  //     console.log('Labores cargadas desde SQLite:', this.labors);
+  //   } catch (error) {
+  //     console.error('Error al cargar labores locales:', error);
+  //   }
+  //   // this.service.getLabor().subscribe
+  //   //   (res => {
+  //   //     this.labors = res;
+  //   //     console.log('Labor:', res);
+  //   //   });
+  // }
+  async loadLabor(haciendaId: number) {
+    try {
+      this.labors = await this.localDbService.obtenerLaborLocal(haciendaId);
+      console.log('Labores cargadas desde SQLite:', this.labors);
+    } catch (error) {
+      console.error('Error al cargar labores locales:', error);
+    }
+    // this.service.getLabor().subscribe
+    //   (res => {
+    //     this.labors = res;
+    //     console.log('Labor:', res);
+    //   });
   }
 
   getLaborName(codLabor: number): string {
@@ -158,20 +206,39 @@ export class AgregarDetPage implements OnInit {
   //     });
   // }
 
-  obtenerDatosCabecera() {
-    this.service.getCabecera(this.secParte).subscribe(res => {
-      this.fechaDelParte = res.fechaParte;
-      console.log('fecha del parte:', this.fechaDelParte);
-      this.cargarEmpleadosPorAsistencia(this.fechaDelParte);
-    });
+
+  async obtenerDatosCabecera() {
+    const locales = await this.localDbService.listarPartesLocales();
+
+    // Mapeamos los campos de SQLite a los nombres que usa tu HTML
+    this.fechaDelParte = locales.length > 0 ? locales[0].fecha_parte : '';
+    console.log('Partes locales', this.fechaDelParte);
+    this.cargarEmpleadosPorAsistencia(this.fechaDelParte);
+
+    if (navigator.onLine) {
+      this.service.getCabecera(this.secParte).subscribe(res => {
+        this.fechaDelParte = res.fechaParte;
+        //console.log('fecha del parte:', this.fechaDelParte);
+        this.cargarEmpleadosPorAsistencia(this.fechaDelParte);
+      });
+    }
   }
 
-  cargarEmpleadosPorAsistencia(fecha: string) {
-    // Usamos el nuevo método del servicio que creamos en el paso anterior
-    this.service.getTrabajadoresAsistencia(fecha).subscribe(res => {
-      this.empleados = res;
-      console.log('Empleados que asistieron este día:', res);
-    });
+  async cargarEmpleadosPorAsistencia(fecha: string) {
+    console.log('Fecha', fecha);
+    const locales = await this.localDbService.getEmpPorAsisLocal(fecha)
+    this.empleados = locales.map(p => ({
+      codTrabaj: p.COD_TRABAJ,
+      nombreCorto: p.NOMBRE_CORTO
+    }));
+    console.log('Empleados cargados desde SQLite:', this.empleados);
+
+    // if (navigator.onLine) {
+    //   this.service.getTrabajadoresAsistencia(fecha).subscribe(res => {
+    //     this.empleados = res;
+    //     //console.log('Empleados que asistieron este día:', res);
+    //   });
+    // }
   }
 
   getEmpleadoName(codTrabaj: number): string {
@@ -179,12 +246,19 @@ export class AgregarDetPage implements OnInit {
     return Empleados ? Empleados.nombreCorto : 'Desconocido';
   }
 
-  loadLote() {
-    this.service.getLotes().subscribe
-      (res => {
-        this.lotes = res;
-        console.log('Lote:', res);
-      });
+  async loadLote() {
+    try {
+      // En lugar de llamar a partesService.getHaciendas(), usamos la DB local
+      this.lotes = await this.localDbService.obtenerLoteLocal();
+      console.log('Lotes cargados desde SQLite:', this.lotes);
+    } catch (error) {
+      console.error('Error al cargar lotes locales:', error);
+    }
+    // this.service.getLotes().subscribe
+    //   (res => {
+    //     this.lotes = res;
+    //     console.log('Lote:', res);
+    //   });
   }
 
   getLoteName(codLote: number): string {

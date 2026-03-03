@@ -79,4 +79,17 @@ export class ConexionpyService {
   editarDetalle(secParte: number, secuencia: number, bodyUpdate: any): Observable<any> {
     return this.httpClient.put<any>(`${this.baseUrl}/TranDpartes/${secParte}/${secuencia}`, bodyUpdate);
   }
+
+  //nomloteseccion
+  getNomLoteSeccion(): Observable<any> {
+    return this.httpClient.get<any>(`${this.baseUrl}/RhMlotSeccion`);
+  }
+
+  //BASE
+  getEsquema(nombreTabla: string): Observable<any>{
+    return this.httpClient.get<any>(`${this.baseUrl}/AdMusuas/esquema/${nombreTabla}`);
+  }
+  getDatosTabla(nombreTabla: string): Observable<any>{
+    return this.httpClient.get<any>(`${this.baseUrl}/AdMusuas/datos/${nombreTabla}`);
+  }
 }

@@ -1,17 +1,12 @@
 <ion-header [translucent]="true">
+  <ion-toolbar color="danger" *ngIf="isOffline">
+    <ion-title size="small">Modo Offline</ion-title>
+  </ion-toolbar>
   <ion-toolbar color="success">
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
     <ion-title>Registro de Partes</ion-title>
-    <ion-buttons slot="end">
-      <ion-button id="open-modal">
-        <ion-icon slot="icon-only" name="add-circle-outline"></ion-icon>
-      </ion-button>
-      <!-- <ion-button (click)="exportToPDF()" title="Descargar PDF">
-        <ion-icon name="download-sharp"></ion-icon>
-      </ion-button> -->
-    </ion-buttons>
   </ion-toolbar>
 
   <ion-toolbar color="success">
@@ -22,19 +17,25 @@
 </ion-header>
 
 <ion-content class="ion-padding-top">
-
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end" class="ion-margin">
+    <ion-fab-button id="open-modal" color="success" style="width: 70px; height: 70px;">
+      <ion-icon name="add" style="font-size: 40px;"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
   <div *ngIf="loading" class="ion-text-center ion-padding">
     <ion-spinner name="crescent" color="success"></ion-spinner>
   </div>
 
   <div *ngIf="!loading && partes.length > 0">
-    <ion-card *ngFor="let p of partes" class="parte-card" [class.aprobado]="p.usuarioaprob">
+    <ion-card *ngFor="let p of partes" class="parte-card" [class.aprobado]="p.usuarioaprob" (click)="goToDetails(p)"
+      button="true">
       <ion-card-content>
         <div class="card-header-flex">
           <div class="header-left-group">
-            <ion-button *ngIf="!p.usuarioaprob" fill="clear" color="danger" (click)="eliminarParte(p.secParte)">
-                  <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-                </ion-button>
+            <ion-button *ngIf="!p.usuarioaprob" fill="clear" color="danger"
+              (click)="eliminarParte(p.secParte); $event.stopPropagation()">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-button>
             <div class="sec-badge">#{{p.secParte}}</div>
             <span *ngIf="p.usuarioaprob" class="texto-aprobado">
               APROBADO
@@ -44,11 +45,18 @@
             <span class="fecha-text">{{ formatDate(p.fechaParte) }}</span>
 
             <div class="mini-actions">
-              <ion-button *ngIf="!p.usuarioaprob" fill="clear" size="small" [routerLink]="['/agregar-det', p.secParte]"
+              <!-- <ion-button *ngIf="!p.usuarioaprob" fill="clear" size="small" [routerLink]="['/agregar-det', p.secParte]" 
+                title="Añadir"> -->
+              <ion-button *ngIf="!p.usuarioaprob && p.totalDetalles === 0" fill="clear" size="small"
+                [routerLink]="['/agregar-det', p.secParte]"
+                [queryParams]="{ haciendaId: p.codHacienda, fecha: p.fechaParte}" (click)="$event.stopPropagation()"
                 title="Añadir">
                 <img src="/assets/images/agregarArchivo.png" width="22" height="22" />
               </ion-button>
-              <ion-button fill="clear" size="small" [routerLink]="['/partes', p.secParte]" title="Detalles">
+              <!-- <ion-button fill="clear" size="small" [routerLink]="['/partes', p.secParte]" title="Detalles"> -->
+              <ion-button *ngIf="p.totalDetalles > 0" fill="clear" size="small" [routerLink]="['/partes', p.secParte]"
+                [queryParams]="{ haciendaId: p.codHacienda, fecha: p.fechaParte}" (click)="$event.stopPropagation()"
+                title="Detalles">
                 <img src="/assets/images/archivoDetalles.png" width="21" height="21" />
               </ion-button>
             </div>
@@ -58,6 +66,9 @@
         <div class="card-body">
           <h2 class="hacienda-title">{{ getHaciendaName(p.codHacienda) }}</h2>
           <p class="codigo-sub">Código: <strong>{{p.codigo || '-'}}</strong></p>
+          <ion-badge *ngIf="isOffline" [color]="p.sync === 1 ? 'success' : 'warning'">
+            {{ p.sync === 1 ? 'Sincronizado' : 'Pendiente' }}
+          </ion-badge>
         </div>
       </ion-card-content>
     </ion-card>
@@ -95,10 +106,14 @@
             [class.ion-touched]="form.get('codHacienda')?.touched">
             <ion-label position="stacked">Seleccionar Hacienda</ion-label>
             <ion-select formControlName="codHacienda" interface="popover" placeholder="Seleccione una">
-              <ion-select-option *ngFor="let h of haciendas" [value]="h.codHacienda">
-                {{ h.nomHacienda }}
+              <ion-select-option *ngFor="let h of haciendas" [value]="h.COD_HACIENDA">
+                {{ h.NOM_HACIENDA }}
               </ion-select-option>
             </ion-select>
+            <!-- <ion-select-option *ngFor="let h of haciendas" [value]="h.codHacienda">
+              {{ h.nomHacienda }}
+            </ion-select-option>
+            </ion-select> -->
             <ion-icon name="business-outline" slot="start"></ion-icon>
             <ion-note slot="error"
               *ngIf="form.get('codHacienda')?.touched && form.get('codHacienda')?.hasError('required')">

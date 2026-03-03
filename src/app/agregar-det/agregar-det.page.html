@@ -25,8 +25,8 @@
               <ion-item class="custom-input">
                 <ion-label position="stacked">Trabajador</ion-label>
                 <ion-select formControlName="empleado" interface="popover" placeholder="Seleccione">
-                  <ion-select-option *ngFor="let e of empleados" [value]="e.codTrabaj">
-                    {{ e.nombreCorto }}
+                  <ion-select-option *ngFor="let e of empleados" [value]="e.codTrabaj || e.COD_TRAJAB">
+                    {{ e.nombreCorto || e.NOMBRE_CORTO }}
                   </ion-select-option>
                 </ion-select>
                 <!-- <ion-input type="text" formControlName="empleado" placeholder="Nombre o código"></ion-input> -->
@@ -36,8 +36,8 @@
               <ion-item class="custom-input">
                 <ion-label position="stacked">Lote</ion-label>
                 <ion-select formControlName="lote" interface="popover" placeholder="Seleccione">
-                  <ion-select-option *ngFor="let l of lotes" [value]="l.loteId">
-                    {{ l.descripcion }}
+                  <ion-select-option *ngFor="let l of lotes" [value]="l">
+                    {{l.nomSeccion || l.NOM_SECCION}} - {{ l.loteid|| l.LOTE_ID}}
                   </ion-select-option>
                 </ion-select>
               </ion-item>

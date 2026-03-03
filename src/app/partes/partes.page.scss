@@ -138,3 +138,8 @@ ion-note[slot="error"] {
   padding-top: 4px;
   font-weight: 500;
 }
+
+ion-toolbar:first-child {
+  // Añade el espacio de la barra de estado (batería, hora) automáticamente
+  padding-top: var(--ion-safe-area-top);
+}

@@ -48,7 +48,9 @@
               </div>
               <div class="info-item">
                 <span class="label">Lote:</span>
-                <span class="value">{{getLoteName(p.loteId)}}</span>
+                <span class="value" *ngIf="p.nomSeccion">{{ p.nomSeccion }}</span>
+                <span class="value" *ngIf="!p.nomSeccion">{{getLoteNomSecc(p.loteId)}} -
+                  {{getLoteName(p.loteId)}}</span>
               </div>
               <div class="info-item">
                 <span class="label">Cantidad:</span>
@@ -86,8 +88,8 @@
               <ion-item fill="outline" mode="md" class="ion-margin-bottom">
                 <ion-label position="stacked">Trabajador</ion-label>
                 <ion-select [(ngModel)]="detalleSeleccionado.codTrabaj">
-                  <ion-select-option *ngFor="let e of empleados" [value]="e.codTrabaj">
-                    {{e.nombreCorto}}
+                  <ion-select-option *ngFor="let e of empleados" [value]="e.codTrabaj || e.COD_TRAJAB">
+                    {{e.nombreCorto || e.NOMBRE_CORTO}}
                   </ion-select-option>
                 </ion-select>
               </ion-item>
@@ -95,10 +97,9 @@
             <ion-col size="6">
               <ion-item fill="outline" mode="md" class="ion-margin-bottom">
                 <ion-label position="stacked">Lote</ion-label>
-                <ion-select [(ngModel)]="detalleSeleccionado.loteId">
-                  <!-- <ion-select-option [value]="0">SIN LOTE (0)</ion-select-option> -->
-                  <ion-select-option *ngFor="let l of lotes" [value]="l.loteId">
-                    {{l.descripcion}}
+                <ion-select [(ngModel)]="detalleSeleccionado.lote" [compareWith]="compareLotes">
+                  <ion-select-option *ngFor="let l of lotes" [value]="l">
+                    {{l.nomSeccion || l.NOM_SECCION}} - {{ l.loteid|| l.LOTE_ID}}
                   </ion-select-option>
                 </ion-select>
               </ion-item>

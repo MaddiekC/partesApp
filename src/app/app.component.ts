@@ -5,6 +5,9 @@ import { Router, NavigationEnd } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import { NgIf } from '@angular/common';
 import { DatabaseService } from './services/dataBase/database.service';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
+import { SyncService } from './services/dataBase/sync.service';
 
 @Component({
   selector: 'app-root',
@@ -15,29 +18,28 @@ export class AppComponent implements OnInit, OnDestroy {
   showMenu = true;
   private sub?: Subscription;
 
-  constructor(private router: Router, private database: DatabaseService) { }
+  constructor(private router: Router, private database: DatabaseService, private syncService: SyncService) { }
 
-  ngOnInit() {
-    this.initApp();
-    // cada vez que cambie la ruta, ocultamos el menu si estamos en /login
+  async ngOnInit() {
+    await this.database.inicializarDB();
+    await this.syncService.sincronizacionInicial();
+    await this.syncService.sincronizarPendientes();
+    
+    if (Capacitor.isNativePlatform()) {
+      //StatusBar.setBackgroundColor({ color: '#2dd36f' });
+      StatusBar.setStyle({ style: Style.Dark }); // Iconos de batería/hora en blanco
+    }
     this.sub = this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
       .subscribe((e: any) => {
         const url = e.urlAfterRedirects ?? e.url;
-        // lista de rutas donde NO queremos mostrar el menú
-        const hideOn = ['/login']; // si tu login es ruta '' o '/login' ajusta aquí
-        // también podrías usar startsWith para rutas como '/auth/login'
+        const hideOn = ['/login'];
         this.showMenu = !hideOn.includes(url);
       });
   }
 
   ngOnDestroy() {
     this.sub?.unsubscribe();
-  }
-
-  async initApp() {
-    await this.database.inicializarDB();
-    console.log('Base de datos SQLite lista');
   }
 }
 
